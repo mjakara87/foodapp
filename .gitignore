@@ -1,9 +1,29 @@
-bin/
-obj/
+## Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+## NuGet
 /packages/
-riderModule.iml
-/_ReSharper.Caches/
-.idea/
+*.nupkg
+*.snupkg
+
+## Logs and coverage
+[Ll]og/
+[Ll]ogs/
+CodeCoverage/
+*.binlog
+
+## User and IDE-specific files
 *.user
 *.suo
 *.rsuser
+.idea/
+riderModule.iml
+/_ReSharper.Caches/
+
+## Common temporary files
+~$*
+*~
