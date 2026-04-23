@@ -1,171 +1,432 @@
 # Food App — Use Cases
 
-> This document describes the primary use cases for the foodapp platform. Each use case is described with actors, preconditions, main flow, and alternative flows.
+> This document describes the primary use cases for the **foodapp** platform — a multi-tenant marketplace that connects restaurants and food stores with customers by offering leftover food packages at discounted prices.
 
 ---
 
-## UC-01: Browse and Search Recipes
+## Actors
 
-| Field         | Detail                                 |
-|---------------|----------------------------------------|
-| **Actor**     | Any user                               |
-| **Goal**      | Find recipes that match criteria       |
-| **Priority**  | High                                   |
+| Actor               | Description                                                                          |
+|---------------------|--------------------------------------------------------------------------------------|
+| **Super Admin**     | Platform administrator with full access to all tenants, users, and system settings. |
+| **Restaurant User** | Tenant-scoped user managing their store, packages, and reservations via the web app. |
+| **Customer**        | End user who browses, reserves, and picks up food packages.                          |
+
+---
+
+## Use Case Index
+
+| ID      | Title                                          | Actor           | Priority |
+|---------|------------------------------------------------|-----------------|----------|
+| UC-A01  | Register & Approve a Restaurant                | Admin           | High     |
+| UC-A02  | Suspend or Deactivate a Tenant                 | Admin           | Medium   |
+| UC-A03  | Manage Platform Users                          | Admin           | Medium   |
+| UC-A04  | View Platform-Wide Statistics                  | Admin           | Low      |
+| UC-R01  | Configure Tenant Settings                      | Restaurant User | High     |
+| UC-R02  | Create a Food Package                          | Restaurant User | High     |
+| UC-R03  | Duplicate a Package for a New Day              | Restaurant User | High     |
+| UC-R04  | Edit or Deactivate a Package                   | Restaurant User | High     |
+| UC-R05  | View and Manage Incoming Reservations          | Restaurant User | High     |
+| UC-R06  | Mark a Reservation as Picked Up                | Restaurant User | High     |
+| UC-R07  | View Daily Sales Summary                       | Restaurant User | Medium   |
+| UC-C01  | Register a Customer Account                    | Customer        | High     |
+| UC-C02  | Browse Restaurants and Packages                | Customer        | High     |
+| UC-C03  | Discover Packages via Recommendations          | Customer        | Medium   |
+| UC-C04  | Reserve a Food Package                         | Customer        | High     |
+| UC-C05  | Cancel a Reservation                           | Customer        | High     |
+| UC-C06  | View Reservation History                       | Customer        | Medium   |
+| UC-C07  | Rate and Review a Restaurant                   | Customer        | Low      |
+
+---
+
+## Admin Use Cases
+
+---
+
+### UC-A01: Register & Approve a Restaurant
+
+| Field        | Detail                                                 |
+|--------------|--------------------------------------------------------|
+| **Actor**    | Super Admin                                            |
+| **Goal**     | Onboard a new restaurant/food store as a tenant        |
+| **Priority** | High                                                   |
 
 **Preconditions**
-- The application is running.
-- At least one recipe exists in the data store (or an external API is reachable).
+- Restaurant has submitted a registration request (name, address, contact, category).
 
 **Main Flow**
-1. User opens the recipe search screen / command.
-2. User enters a search term (ingredient, cuisine, dish name, or dietary tag).
-3. System queries local data store and/or external API.
-4. System returns a ranked list of matching recipes.
-5. User selects a recipe to see full details (ingredients, steps, nutrition).
+1. Admin reviews the pending registration request in the admin panel.
+2. Admin verifies the restaurant details.
+3. Admin approves the tenant — system creates the tenant account and sends credentials to the restaurant.
+4. Restaurant user can now log in and configure their profile.
 
 **Alternative Flows**
-- *No results found:* System informs the user and suggests broadening the search.
-- *External API unreachable:* System falls back to local data only and notifies the user.
+- *Admin rejects request:* System notifies the applicant with a reason and removes the pending request.
+- *Admin requests more information:* System sends a message to the applicant and keeps the request in a pending state.
 
 ---
 
-## UC-02: Create a Personal Recipe
+### UC-A02: Suspend or Deactivate a Tenant
 
-| Field         | Detail                                 |
-|---------------|----------------------------------------|
-| **Actor**     | Registered user                        |
-| **Goal**      | Save a custom recipe for personal use  |
-| **Priority**  | High                                   |
+| Field        | Detail                                                |
+|--------------|-------------------------------------------------------|
+| **Actor**    | Super Admin                                           |
+| **Goal**     | Temporarily or permanently disable a tenant account   |
+| **Priority** | Medium                                                |
+
+**Main Flow**
+1. Admin selects a tenant from the tenant list.
+2. Admin chooses Suspend (temporary) or Deactivate (permanent).
+3. System hides the tenant's packages from all customers.
+4. System notifies the tenant of the action and the reason.
+5. Active unresolved reservations are cancelled and customers are notified.
+
+**Alternative Flows**
+- *Admin reactivates a suspended tenant:* Packages become visible again; tenant is notified.
+
+---
+
+### UC-A03: Manage Platform Users
+
+| Field        | Detail                                                        |
+|--------------|---------------------------------------------------------------|
+| **Actor**    | Super Admin                                                   |
+| **Goal**     | View, search, and moderate customer and restaurant accounts   |
+| **Priority** | Medium                                                        |
+
+**Main Flow**
+1. Admin searches or filters users by type, status, or name.
+2. Admin views user details and activity history.
+3. Admin can disable/re-enable an account or reset credentials.
+
+---
+
+### UC-A04: View Platform-Wide Statistics
+
+| Field        | Detail                                             |
+|--------------|----------------------------------------------------|
+| **Actor**    | Super Admin                                        |
+| **Goal**     | Monitor platform health and key metrics            |
+| **Priority** | Low                                                |
+
+**Main Flow**
+1. Admin opens the statistics dashboard.
+2. System displays metrics: active tenants, total packages listed, total reservations, pickup rate, cancellation rate.
+3. Admin filters by date range or tenant.
+
+---
+
+## Restaurant / Tenant Use Cases
+
+---
+
+### UC-R01: Configure Tenant Settings
+
+| Field        | Detail                                                              |
+|--------------|---------------------------------------------------------------------|
+| **Actor**    | Restaurant User                                                     |
+| **Goal**     | Set store-wide defaults that apply to all packages                  |
+| **Priority** | High                                                                |
 
 **Preconditions**
-- User has an account (or local profile).
+- Restaurant user is logged in to their tenant account.
 
 **Main Flow**
-1. User selects "Create Recipe".
-2. User enters recipe name, servings, preparation time, and cooking time.
-3. User adds ingredients (name, quantity, unit).
-4. User adds step-by-step instructions.
-5. User optionally adds tags (cuisine, dietary labels, e.g. vegan, gluten-free).
-6. System validates input and saves the recipe.
-7. System confirms and displays the saved recipe.
+1. User opens Store Settings.
+2. User fills in store details: name, address, description, logo/photo, cuisine category.
+3. User sets **default pickup window** (e.g., 18:00 – 20:00) — applied to every new package unless overridden.
+4. User sets **cancellation interval**: number of hours before pickup start after which customers can no longer cancel (e.g., 2 hours).
+5. System saves settings and applies defaults to future packages.
 
 **Alternative Flows**
-- *Missing required fields:* System highlights errors and prompts correction.
-- *Duplicate recipe name:* System warns and asks the user to rename or overwrite.
+- *Missing required fields:* System highlights errors.
 
 ---
 
-## UC-03: Plan Weekly Meals
+### UC-R02: Create a Food Package
 
-| Field         | Detail                                         |
-|---------------|------------------------------------------------|
-| **Actor**     | Registered user                                |
-| **Goal**      | Assign recipes to days of the week             |
-| **Priority**  | High                                           |
+| Field        | Detail                                                                |
+|--------------|-----------------------------------------------------------------------|
+| **Actor**    | Restaurant User                                                       |
+| **Goal**     | List leftover food as a discounted package for customers to reserve   |
+| **Priority** | High                                                                  |
 
 **Preconditions**
-- At least one recipe exists in the system.
+- Tenant settings are configured (UC-R01).
 
 **Main Flow**
-1. User opens the Meal Planner for a target week.
-2. User selects a day and meal slot (Breakfast / Lunch / Dinner / Snack).
-3. User searches for or picks a recipe from the list.
-4. System assigns the recipe to the slot and records the servings count.
-5. User repeats for other days / meal slots.
-6. User saves the weekly plan.
+1. User selects "New Package".
+2. User fills in package details:
+   - **Name** (e.g., "Mystery Pasta Box", "Mixed Sushi Combo")
+   - **Type**: Single item or combo of multiple items
+   - **Description**
+   - **Image** (upload)
+   - **Original price** and **discounted price**
+   - **Available count** (how many packages can be reserved)
+   - **Pickup date**
+   - **Pickup window** (pre-filled from store default, can be overridden)
+   - **Dietary tags** (vegetarian, vegan, contains gluten, etc.)
+3. User publishes the package — it becomes immediately visible to customers.
 
 **Alternative Flows**
-- *Recipe slots conflict with dietary restrictions on the profile:* System warns the user.
-- *User clears a slot:* System removes the assignment and recalculates totals.
+- *Missing required fields:* System highlights errors and blocks publishing.
+- *User saves as draft:* Package is not visible to customers until explicitly published.
 
 ---
 
-## UC-04: Generate Shopping List
+### UC-R03: Duplicate a Package for a New Day
 
-| Field         | Detail                                         |
-|---------------|------------------------------------------------|
-| **Actor**     | Registered user                                |
-| **Goal**      | Get a consolidated ingredient list for the week|
-| **Priority**  | High                                           |
+| Field        | Detail                                                              |
+|--------------|---------------------------------------------------------------------|
+| **Actor**    | Restaurant User                                                     |
+| **Goal**     | Quickly re-create yesterday's package for today with minimal effort |
+| **Priority** | High                                                                |
 
 **Preconditions**
-- A weekly meal plan exists (UC-03).
+- At least one previous package exists.
 
 **Main Flow**
-1. User requests a shopping list for the current or a selected week.
-2. System aggregates ingredients across all planned meals.
-3. System deduplicates and sums quantities for the same ingredient/unit.
-4. System displays the consolidated shopping list, grouped by category (Produce, Dairy, Meat, etc.).
-5. User optionally checks off items or exports the list.
+1. User selects an existing package and clicks "Duplicate".
+2. System creates a copy with the same name, description, image, price, count, and pickup window.
+3. System sets the **pickup date** to today by default (user can change it).
+4. User reviews and adjusts any fields if needed (e.g., count, price, pickup window).
+5. User publishes the duplicated package.
 
 **Alternative Flows**
-- *No meal plan exists:* System prompts the user to create a plan first.
-- *Export:* System outputs the list as plain text or CSV.
+- *User cancels:* No new package is created.
 
 ---
 
-## UC-05: Track Daily Nutritional Intake
+### UC-R04: Edit or Deactivate a Package
 
-| Field         | Detail                                         |
-|---------------|------------------------------------------------|
-| **Actor**     | Registered user                                |
-| **Goal**      | Log meals eaten and see nutritional summary    |
-| **Priority**  | Medium                                         |
+| Field        | Detail                                                |
+|--------------|-------------------------------------------------------|
+| **Actor**    | Restaurant User                                       |
+| **Goal**     | Update package details or remove it from the listing  |
+| **Priority** | High                                                  |
+
+**Main Flow**
+1. User selects an active package from their package list.
+2. User edits one or more fields (count, price, description, pickup window).
+3. System saves changes — updates are immediately visible to customers.
+
+**Deactivation Sub-flow**
+1. User selects "Deactivate" on a package.
+2. System removes the package from customer listings.
+3. If there are existing reservations, system cancels them and notifies affected customers.
+
+---
+
+### UC-R05: View and Manage Incoming Reservations
+
+| Field        | Detail                                              |
+|--------------|-----------------------------------------------------|
+| **Actor**    | Restaurant User                                     |
+| **Goal**     | See which customers reserved packages and when      |
+| **Priority** | High                                                |
+
+**Main Flow**
+1. User opens the Reservations view, filtered by date or package.
+2. System displays a list: customer name, package, quantity, reservation time, status.
+3. User can expand a reservation to see customer contact details for pickup coordination.
+
+**Alternative Flows**
+- *No reservations yet:* System shows an empty state.
+
+---
+
+### UC-R06: Mark a Reservation as Picked Up
+
+| Field        | Detail                                                        |
+|--------------|---------------------------------------------------------------|
+| **Actor**    | Restaurant User                                               |
+| **Goal**     | Confirm that a customer collected their package in person      |
+| **Priority** | High                                                          |
 
 **Preconditions**
-- Nutritional data is available for at least the consumed recipes.
+- A reservation is in "Reserved" status and the pickup window has started.
 
 **Main Flow**
-1. User opens the Nutrition Log for the current day.
-2. User adds a consumed meal (recipe + actual servings eaten).
-3. System calculates calories, protein, carbohydrates, fat, and fibre for the entry.
-4. System displays a running daily total and a comparison against the user's daily targets.
-5. User can add, edit, or remove entries.
+1. User locates the reservation (by name or reservation code / QR scan).
+2. User taps/clicks "Mark as Picked Up".
+3. System updates the reservation status to **Completed** and records the timestamp.
 
 **Alternative Flows**
-- *Nutritional data missing for an ingredient:* System flags the item and asks the user to enter it manually.
-- *Daily target not set:* System displays raw totals only.
+- *Customer does not show up:* User marks the reservation as **No-Show** after the pickup window closes.
 
 ---
 
-## UC-06: Share a Recipe
+### UC-R07: View Daily Sales Summary
 
-| Field         | Detail                                         |
-|---------------|------------------------------------------------|
-| **Actor**     | Registered user                                |
-| **Goal**      | Make a personal recipe visible to the community|
-| **Priority**  | Low                                            |
+| Field        | Detail                                            |
+|--------------|---------------------------------------------------|
+| **Actor**    | Restaurant User                                   |
+| **Goal**     | See today's (or past) reservation and sales data  |
+| **Priority** | Medium                                            |
+
+**Main Flow**
+1. User opens the Dashboard / Reports section.
+2. System displays for the selected date: packages listed, total reserved, total picked up, no-shows, revenue generated.
+3. User can filter by date range or package type.
+
+---
+
+## Customer Use Cases
+
+---
+
+### UC-C01: Register a Customer Account
+
+| Field        | Detail                                              |
+|--------------|-----------------------------------------------------|
+| **Actor**    | Customer                                            |
+| **Goal**     | Create a personal account to reserve packages       |
+| **Priority** | High                                                |
+
+**Main Flow**
+1. Customer opens the app or platform.
+2. Customer enters name, email, and password (or signs in with a social provider).
+3. System sends an email verification link.
+4. Customer verifies email — account is activated.
+5. Customer optionally sets dietary preferences and location.
+
+**Alternative Flows**
+- *Email already registered:* System prompts to log in or reset password.
+
+---
+
+### UC-C02: Browse Restaurants and Packages
+
+| Field        | Detail                                                             |
+|--------------|--------------------------------------------------------------------|
+| **Actor**    | Customer                                                           |
+| **Goal**     | Find available food packages nearby or by preference               |
+| **Priority** | High                                                               |
 
 **Preconditions**
-- User has at least one personal recipe.
-- Community / sharing feature is enabled.
+- At least one active package is listed on the platform.
 
 **Main Flow**
-1. User navigates to their recipe and selects "Share".
-2. System asks the user to confirm and choose a visibility level (Public / Friends).
-3. System publishes the recipe under the user's profile.
-4. Other users can discover, view, and save the shared recipe.
+1. Customer opens the browse/explore view.
+2. Customer can filter by: location/distance, cuisine category, dietary tags, pickup time range, price range.
+3. System displays matching restaurants and their active packages with count remaining.
+4. Customer selects a restaurant to view its profile and available packages.
+5. Customer selects a package to view full details (description, image, prices, pickup window, slots remaining).
+
+---
+
+### UC-C03: Discover Packages via Recommendations
+
+| Field        | Detail                                                                     |
+|--------------|----------------------------------------------------------------------------|
+| **Actor**    | Customer                                                                   |
+| **Goal**     | Receive personalised food package suggestions without manual searching     |
+| **Priority** | Medium                                                                     |
+
+**Main Flow**
+1. System analyses the customer's past reservations, dietary preferences, and location.
+2. System displays a "Recommended for You" section on the home screen.
+3. Customer browses recommended packages and restaurants.
+4. Customer can dismiss a recommendation or mark as "Not interested" to refine future suggestions.
 
 **Alternative Flows**
-- *User unshares:* System reverts the recipe to private without deleting community saves.
+- *New customer with no history:* System shows popular packages near the customer's location.
 
 ---
 
-## UC-07: Manage User Profile & Dietary Preferences
+### UC-C04: Reserve a Food Package
 
-| Field         | Detail                                         |
-|---------------|------------------------------------------------|
-| **Actor**     | Registered user                                |
-| **Goal**      | Configure personal dietary goals and restrictions |
-| **Priority**  | Medium                                         |
+| Field        | Detail                                                             |
+|--------------|--------------------------------------------------------------------|
+| **Actor**    | Customer                                                           |
+| **Goal**     | Secure a food package for pickup at the restaurant                 |
+| **Priority** | High                                                               |
+
+**Preconditions**
+- Customer has a verified account and is logged in.
+- The package has at least one unit remaining.
 
 **Main Flow**
-1. User opens Profile Settings.
-2. User sets daily calorie and macro targets.
-3. User sets dietary restrictions (e.g., lactose-free, nut allergy, vegan).
-4. System saves preferences and applies them as filters/warnings throughout the app.
+1. Customer views a package and selects "Reserve".
+2. Customer selects quantity (if more than 1 is available).
+3. System confirms availability in real time and creates the reservation.
+4. System decrements the available count on the package.
+5. System sends a confirmation to the customer (in-app + email) with:
+   - Reservation code / QR code
+   - Restaurant name and address
+   - Pickup window
+   - Payment reminder (pay on pickup — no online payment)
+6. Restaurant user is notified of the new reservation.
+
+**Alternative Flows**
+- *Package sells out before confirmation:* System informs the customer and aborts.
+- *Customer is not logged in:* System prompts to log in or register first.
 
 ---
 
-*Document version: 1.0 — April 2026*
+### UC-C05: Cancel a Reservation
+
+| Field        | Detail                                                                  |
+|--------------|-------------------------------------------------------------------------|
+| **Actor**    | Customer                                                                |
+| **Goal**     | Free a reserved package when the customer can no longer pick it up      |
+| **Priority** | High                                                                    |
+
+**Preconditions**
+- Reservation is in "Reserved" status.
+- Current time is before the **cancellation deadline** (pickup start minus the restaurant's cancellation interval).
+
+**Main Flow**
+1. Customer opens their active reservations and selects "Cancel".
+2. System checks the cancellation deadline.
+3. System cancels the reservation and returns the slot to the package's available count.
+4. System notifies the restaurant of the cancellation.
+5. Customer receives a cancellation confirmation.
+
+**Alternative Flows**
+- *Cancellation deadline has passed:* System informs the customer that cancellation is no longer possible.
+
+---
+
+### UC-C06: View Reservation History
+
+| Field        | Detail                                                     |
+|--------------|------------------------------------------------------------|
+| **Actor**    | Customer                                                   |
+| **Goal**     | Review past and upcoming reservations                      |
+| **Priority** | Medium                                                     |
+
+**Main Flow**
+1. Customer opens "My Reservations".
+2. System displays reservations grouped into:
+   - **Upcoming** — Reserved, not yet picked up.
+   - **Past** — Completed or no-showed.
+   - **Cancelled** — Cancelled by customer or restaurant.
+3. Customer can select any entry to view its full details.
+
+---
+
+### UC-C07: Rate and Review a Restaurant
+
+| Field        | Detail                                                        |
+|--------------|---------------------------------------------------------------|
+| **Actor**    | Customer                                                      |
+| **Goal**     | Leave feedback after picking up a package                     |
+| **Priority** | Low                                                           |
+
+**Preconditions**
+- Customer has at least one reservation with **Completed** status.
+
+**Main Flow**
+1. After a completed pickup, system prompts the customer to leave a review.
+2. Customer gives a star rating (1–5) and optional text comment.
+3. System saves the review and attaches it to the restaurant's public profile.
+4. Restaurant user can view all reviews from their dashboard.
+
+**Alternative Flows**
+- *Customer skips:* No review is recorded; system does not prompt again for the same reservation.
+
+---
+
+*Document version: 2.0 — April 2026*
 
